@@ -6,7 +6,7 @@ that the view is conditionally available when Course Auth is turned on.
 """
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from mock import patch
+from mock import patch, Mock
 from nose.plugins.attrib import attr
 from opaque_keys.edx.locations import SlashSeparatedCourseKey
 
@@ -41,10 +41,11 @@ class TestNewInstructorDashboardEmailViewMongoBacked(SharedModuleStoreTestCase):
         instructor = AdminFactory.create()
         self.client.login(username=instructor.username, password="test")
 
-    # In order for bulk email to work, we must have both the ENABLE_INSTRUCTOR_EMAIL_FLAG
+    # In order for bulk email to work, we must have both the BulkEmailFlag.is_enabled()
     # set to True and for the course to be Mongo-backed.
     # The flag is enabled and the course is Mongo-backed (should work)
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': False})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=True))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': False})
     def test_email_flag_true_mongo_true(self):
         # Assert that instructor email is enabled for this course - since REQUIRE_COURSE_EMAIL_AUTH is False,
         # all courses should be authorized to use email.
@@ -58,14 +59,15 @@ class TestNewInstructorDashboardEmailViewMongoBacked(SharedModuleStoreTestCase):
         self.assertEqual(response.status_code, 200)
 
     # The course is Mongo-backed but the flag is disabled (should not work)
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': False})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=False))
     def test_email_flag_false_mongo_true(self):
         # Assert that the URL for the email view is not in the response
         response = self.client.get(self.url)
         self.assertFalse(self.email_link in response.content)
 
     # Flag is enabled, but we require course auth and haven't turned it on for this course
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': True})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=True))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': True})
     def test_course_not_authorized(self):
         # Assert that instructor email is not enabled for this course
         self.assertFalse(CourseAuthorization.instructor_email_enabled(self.course.id))
@@ -74,7 +76,8 @@ class TestNewInstructorDashboardEmailViewMongoBacked(SharedModuleStoreTestCase):
         self.assertFalse(self.email_link in response.content)
 
     # Flag is enabled, we require course auth and turn it on for this course
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': True})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=True))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': True})
     def test_course_authorized(self):
         # Assert that instructor email is not enabled for this course
         self.assertFalse(CourseAuthorization.instructor_email_enabled(self.course.id))
@@ -93,7 +96,8 @@ class TestNewInstructorDashboardEmailViewMongoBacked(SharedModuleStoreTestCase):
         self.assertTrue(self.email_link in response.content)
 
     # Flag is disabled, but course is authorized
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': False, 'REQUIRE_COURSE_EMAIL_AUTH': True})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=False))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': True})
     def test_course_authorized_feature_off(self):
         # Authorize the course to use email
         cauth = CourseAuthorization(course_id=self.course.id, email_enabled=True)
@@ -138,13 +142,15 @@ class TestNewInstructorDashboardEmailViewXMLBacked(SharedModuleStoreTestCase):
 
     # The flag is enabled, and since REQUIRE_COURSE_EMAIL_AUTH is False, all courses should
     # be authorized to use email. But the course is not Mongo-backed (should not work)
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': False})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=True))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': False})
     def test_email_flag_true_mongo_false(self):
         response = self.client.get(self.url)
         self.assertFalse(self.email_link in response.content)
 
     # The flag is disabled and the course is not Mongo-backed (should not work)
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': False, 'REQUIRE_COURSE_EMAIL_AUTH': False})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=False))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': False})
     def test_email_flag_false_mongo_false(self):
         response = self.client.get(self.url)
         self.assertFalse(self.email_link in response.content)

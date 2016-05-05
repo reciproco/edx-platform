@@ -22,7 +22,7 @@ from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.django import modulestore
 from opaque_keys.edx.keys import UsageKey
 
-from bulk_email.models import CourseAuthorization
+from bulk_email.models import CourseAuthorization, BulkEmailFlag
 
 DATE_FIELD = Date()
 
@@ -60,15 +60,14 @@ def handle_dashboard_error(view):
 def bulk_email_is_enabled_for_course(course_id):
     """
     Staff can only send bulk email for a course if all the following conditions are true:
-    1. Bulk email feature flag is on.
+    1. BulkEmailFlag is enabled.
     2. It is a studio course.
     3. Bulk email is enabled for the course.
     """
 
-    bulk_email_enabled_globally = (settings.FEATURES['ENABLE_INSTRUCTOR_EMAIL'] is True)
     bulk_email_enabled_for_course = CourseAuthorization.instructor_email_enabled(course_id)
 
-    if bulk_email_enabled_globally and bulk_email_enabled_for_course:
+    if BulkEmailFlag.is_enabled() and bulk_email_enabled_for_course:
         return True
 
     return False

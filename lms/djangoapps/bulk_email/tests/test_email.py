@@ -79,7 +79,8 @@ class EmailSendFromDashboardTestCase(SharedModuleStoreTestCase):
         """
         self.client.login(username=user.username, password="test")
 
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': False})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=True))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': False})
     def goto_instructor_dash_email_view(self):
         """
         Goes to the instructor dashboard to verify that the email section is
@@ -90,7 +91,7 @@ class EmailSendFromDashboardTestCase(SharedModuleStoreTestCase):
         # navigate to a particular email section
         response = self.client.get(url)
         email_section = '<div class="vert-left send-email" id="section-send-email">'
-        # If this fails, it is likely because ENABLE_INSTRUCTOR_EMAIL is set to False
+        # If this fails, it is likely because BulkEmailFlag.is_enabled() is set to False
         self.assertIn(email_section, response.content)
 
     @classmethod
@@ -123,13 +124,15 @@ class EmailSendFromDashboardTestCase(SharedModuleStoreTestCase):
 
 
 @attr('shard_1')
-@patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': False})
+@patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=True))
+@patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': False})
 @patch('bulk_email.models.html_to_text', Mock(return_value='Mocking CourseEmail.text_message', autospec=True))
 class TestEmailSendFromDashboardMockedHtmlToText(EmailSendFromDashboardTestCase):
     """
     Tests email sending with mocked html_to_text.
     """
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': True})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=True))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': True})
     def test_email_disabled(self):
         """
         Test response when email is disabled for course.
@@ -402,7 +405,8 @@ class TestEmailSendFromDashboardMockedHtmlToText(EmailSendFromDashboardTestCase)
 
 
 @attr('shard_1')
-@patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': False})
+@patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=True))
+@patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': False})
 @skipIf(os.environ.get("TRAVIS") == 'true', "Skip this test in Travis CI.")
 class TestEmailSendFromDashboard(EmailSendFromDashboardTestCase):
     """

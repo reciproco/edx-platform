@@ -49,10 +49,11 @@ class TestOptoutCourseEmails(ModuleStoreTestCase):
         url = reverse('instructor_dashboard', kwargs={'course_id': self.course.id.to_deprecated_string()})
         response = self.client.get(url)
         email_section = '<div class="vert-left send-email" id="section-send-email">'
-        # If this fails, it is likely because ENABLE_INSTRUCTOR_EMAIL is set to False
+        # If this fails, it is likely because BulkEmailFlag.is_enabled() is set to False
         self.assertTrue(email_section in response.content)
 
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': False})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=True))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': False})
     def test_optout_course(self):
         """
         Make sure student does not receive course email after opting out.
@@ -80,7 +81,8 @@ class TestOptoutCourseEmails(ModuleStoreTestCase):
         # Assert that self.student.email not in mail.to, outbox should be empty
         self.assertEqual(len(mail.outbox), 0)
 
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': False})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=True))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': False})
     def test_optin_course(self):
         """
         Make sure student receives course email after opting in.

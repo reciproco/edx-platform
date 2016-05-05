@@ -8,7 +8,7 @@ import unittest
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from mock import patch
+from mock import patch, Mock
 from opaque_keys.edx.locations import SlashSeparatedCourseKey
 
 from student.tests.factories import UserFactory, CourseEnrollmentFactory
@@ -51,19 +51,21 @@ class TestStudentDashboardEmailView(SharedModuleStoreTestCase):
             name=self.course.display_name.replace(' ', '_'),
         )
 
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': False})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=True))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': False})
     def test_email_flag_true(self):
         # Assert that the URL for the email view is in the response
         response = self.client.get(self.url)
         self.assertTrue(self.email_modal_link in response.content)
 
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': False})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=False))
     def test_email_flag_false(self):
         # Assert that the URL for the email view is not in the response
         response = self.client.get(self.url)
         self.assertFalse(self.email_modal_link in response.content)
 
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': True})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=True))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': True})
     def test_email_unauthorized(self):
         # Assert that instructor email is not enabled for this course
         self.assertFalse(CourseAuthorization.instructor_email_enabled(self.course.id))
@@ -72,7 +74,8 @@ class TestStudentDashboardEmailView(SharedModuleStoreTestCase):
         response = self.client.get(self.url)
         self.assertFalse(self.email_modal_link in response.content)
 
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': True})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=True))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': True})
     def test_email_authorized(self):
         # Authorize the course to use email
         cauth = CourseAuthorization(course_id=self.course.id, email_enabled=True)
@@ -117,14 +120,16 @@ class TestStudentDashboardEmailViewXMLBacked(SharedModuleStoreTestCase):
             name='2012_Fall',
         )
 
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': True, 'REQUIRE_COURSE_EMAIL_AUTH': False})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=True))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': False})
     def test_email_flag_true_xml_store(self):
         # The flag is enabled, and since REQUIRE_COURSE_EMAIL_AUTH is False, all courses should
         # be authorized to use email. But the course is not Mongo-backed (should not work)
         response = self.client.get(self.url)
         self.assertFalse(self.email_modal_link in response.content)
 
-    @patch.dict(settings.FEATURES, {'ENABLE_INSTRUCTOR_EMAIL': False, 'REQUIRE_COURSE_EMAIL_AUTH': False})
+    @patch('bulk_email.models.BulkEmailFlag.is_enabled', Mock(return_value=False))
+    @patch.dict(settings.FEATURES, {'REQUIRE_COURSE_EMAIL_AUTH': False})
     def test_email_flag_false_xml_store(self):
         # Email disabled, shouldn't see link.
         response = self.client.get(self.url)

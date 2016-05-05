@@ -83,7 +83,7 @@ from external_auth.login_and_register import (
     register as external_auth_register
 )
 
-from bulk_email.models import Optout, CourseAuthorization
+from bulk_email.models import Optout, CourseAuthorization, BulkEmailFlag
 from lang_pref import LANGUAGE_KEY
 
 import track.views
@@ -648,7 +648,7 @@ def dashboard(request):
     # only show email settings for Mongo course and when bulk email is turned on
     show_email_settings_for = frozenset(
         enrollment.course_id for enrollment in course_enrollments if (
-            settings.FEATURES['ENABLE_INSTRUCTOR_EMAIL'] and
+            BulkEmailFlag.is_enabled() and
             CourseAuthorization.instructor_email_enabled(enrollment.course_id)
         )
     )

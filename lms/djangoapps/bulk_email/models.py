@@ -20,6 +20,8 @@ from django.db import models
 from openedx.core.lib.html_to_text import html_to_text
 from openedx.core.lib.mail_utils import wrap_message
 
+from config_models.models import ConfigurationModel
+
 from xmodule_django.models import CourseKeyField
 from util.keyword_substitution import substitute_keywords_with_data
 
@@ -260,3 +262,14 @@ class CourseAuthorization(models.Model):
             not_en = ""
         # pylint: disable=no-member
         return u"Course '{}': Instructor Email {}Enabled".format(self.course_id.to_deprecated_string(), not_en)
+
+
+class BulkEmailFlag(ConfigurationModel):
+    """Enables site-wide feature switch for bulk_email"""
+    # ConfigurationModel defines all the fields we need; this is just a concrete child class
+
+    class Meta(object):
+        app_label = "bulk_email"
+
+    def __unicode__(self):
+        return u"<BulkEmailFlag: {}>".format(self.is_enabled())
