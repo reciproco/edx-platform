@@ -20,9 +20,10 @@
             var userPreferencesModel = new UserPreferencesModel();
             userPreferencesModel.url = userPreferencesApiUrl;
 
-            var sectionsData = [
+            var aboutSectionsData = [
                  {
-                    title: gettext('Basic Account Information (required)'),
+                    title: gettext('Basic Account Information'),
+                    subtitle: gettext('These settings include basic information about your account. You can also specify additional information and see your linked social accounts on this page.'),
                     fields: [
                         {
                             view: new FieldViews.ReadonlyFieldView({
@@ -95,7 +96,7 @@
                     ]
                 },
                 {
-                    title: gettext('Additional Information (optional)'),
+                    title: gettext('Additional Information'),
                     fields: [
                         {
                             view: new FieldViews.DropdownFieldView({
@@ -137,8 +138,8 @@
                 }
             ];
 
-            if (_.isArray(authData.providers)) {
-                var accountsSectionData = {
+            var accountsSectionData = [
+                {
                     title: gettext('Connected Accounts'),
                     fields: _.map(authData.providers, function(provider) {
                         return {
@@ -156,24 +157,19 @@
                             })
                         };
                     })
-                };
-                sectionsData.push(accountsSectionData);
-            }
+                }
+            ];
 
             var accountSettingsView = new AccountSettingsView({
                 model: userAccountModel,
                 accountUserId: accountUserId,
                 el: accountSettingsElement,
-                sectionsData: sectionsData
+                aboutSectionsData: aboutSectionsData,
+                accountsSectionData: accountsSectionData,
+                userPreferencesModel: userPreferencesModel
             });
 
-            accountSettingsView.render();
-
-            var showLoadingError = function () {
-                accountSettingsView.showLoadingError();
-            };
-
-            var showAccountFields = function () {
+            var showAccountSettingsPage = function () {
                 // Record that the account settings page was viewed.
                 Logger.log('edx.user.settings.viewed', {
                     page: "account",
@@ -181,15 +177,19 @@
                     user_id: accountUserId
                 });
 
-                // Render the fields
-                accountSettingsView.renderFields();
+                // Render the account settings page
+                accountSettingsView.render();
+            };
+
+            var showLoadingError = function () {
+                accountSettingsView.showLoadingError();
             };
 
             userAccountModel.fetch({
                 success: function () {
                     // Fetch the user preferences model
                     userPreferencesModel.fetch({
-                        success: showAccountFields,
+                        success: showAccountSettingsPage,
                         error: showLoadingError
                     });
                 },
