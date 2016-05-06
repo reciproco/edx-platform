@@ -42,7 +42,9 @@ function() {
                 '<button class="control" aria-disabled="false" aria-label="',
                     gettext('Volume: Click on this button to mute or unmute this video or press UP or ' +
                         'DOWN buttons to increase or decrease volume level.'),
-                    '" aria-expanded="false">',
+                    '" aria-expanded="false" title="',
+                        gettext('Adjust video volume'),
+                    '">',
                     '<span class="icon-fallback-img">',
                         '<span class="icon fa fa-volume-up" aria-hidden="true"></span>',
                         '<span class="sr control-text">',
