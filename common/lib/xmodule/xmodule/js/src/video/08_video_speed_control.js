@@ -33,7 +33,9 @@ function (Iterator) {
                 '<button class="control speed-button" aria-label="',
                     /* jshint maxlen:200 */
                     gettext('Speed: Press UP to enter the speed menu then use the UP and DOWN arrow keys to navigate the different speeds, then press ENTER to change to the selected speed.'),
-                    '" aria-disabled="false" aria-expanded="false">',
+                    '" aria-disabled="false" aria-expanded="false" title="',
+                        gettext('Adjust video speed'),
+                    '">',
                     '<span class="icon-fallback-img">',
                         '<span class="icon fa fa-caret-right" aria-hidden="true"></span>',
                         '<span class="sr control-text">',
