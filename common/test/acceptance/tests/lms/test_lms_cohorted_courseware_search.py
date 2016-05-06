@@ -27,7 +27,6 @@ from bok_choy.promise import EmptyPromise
 from flaky import flaky
 
 
-@flaky(20, 20)
 @attr('shard_1')
 class CoursewareSearchCohortTest(ContainerBase):
     """
@@ -226,6 +225,7 @@ class CoursewareSearchCohortTest(ContainerBase):
         self._auto_auth(self.cohort_default_student_username, self.cohort_default_student_email, False)
         self.courseware_search_page.visit()
 
+    @flaky(20, 20)
     def test_cohorted_search_user_a_a_content(self):
         """
         Test user can search content restricted to his cohort.
@@ -262,6 +262,7 @@ class CoursewareSearchCohortTest(ContainerBase):
         self.courseware_search_page.search_for_term(self.visible_to_all_html)
         assert self.visible_to_all_html in self.courseware_search_page.search_results.html[0]
 
+    @flaky(20, 20)
     def test_cohorted_search_user_staff_all_content(self):
         """
         Test staff user can search all public content if cohorts used on course.
