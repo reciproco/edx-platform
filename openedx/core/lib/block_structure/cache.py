@@ -16,6 +16,11 @@ class BlockStructureCache(object):
     """
     Cache for BlockStructure objects.
     """
+    # Set the timeout value for the cache to None. This caches the
+    # value forever. The expectation is that the caller will delete
+    # the cached value once it is outdated.
+    cache_timeout = None
+
     def __init__(self, cache):
         """
         Arguments:
@@ -41,12 +46,13 @@ class BlockStructureCache(object):
         data_to_cache = (
             block_structure._block_relations,
             block_structure._transformer_data,
-            block_structure._block_data_map
+            block_structure._block_data_map,
         )
         zp_data_to_cache = zpickle(data_to_cache)
         self._cache.set(
             self._encode_root_cache_key(block_structure.root_block_usage_key),
-            zp_data_to_cache
+            zp_data_to_cache,
+            timeout=self.cache_timeout,
         )
         logger.info(
             "Wrote BlockStructure %s to cache, size: %s",
