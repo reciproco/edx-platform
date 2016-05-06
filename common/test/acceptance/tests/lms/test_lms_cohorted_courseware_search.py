@@ -24,7 +24,10 @@ from ...pages.lms.instructor_dashboard import InstructorDashboardPage
 
 from bok_choy.promise import EmptyPromise
 
+from flaky import flaky
 
+
+@flaky(20, 20)
 @attr('shard_1')
 class CoursewareSearchCohortTest(ContainerBase):
     """
