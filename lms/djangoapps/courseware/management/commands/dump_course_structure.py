@@ -95,6 +95,11 @@ def dump_module(module, destination=None, inherited=False, defaults=False):
 
     items = own_metadata(module)
 
+    # HACK: add discussion ids to list of items to export (AN-6696)
+    if module.location.category == 'discussion':
+        if 'discussion_id' not in items:
+            items['discussion_id'] = module.discussion_id
+
     filtered_metadata = {k: v for k, v in items.iteritems() if k not in FILTER_LIST}
 
     destination[unicode(module.location)] = {
